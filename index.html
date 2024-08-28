@@ -19,7 +19,6 @@
             width: 70%;
             display: flex;
             flex-direction: column;
-
         }
         .right-column {
             width: 30%;
@@ -30,12 +29,11 @@
         }
         #myVideo {
             width: 90%;
-            
             max-height: 55%;
         }
         #myChartContainer {
             height: 45%;
-	    width: 150%;
+            width: 150%;
         }
         #myChart {
             width: 100%;
@@ -52,7 +50,17 @@
             cursor: pointer;
         }
         .file-input {
-            margin-bottom: 10px;
+            display: none;
+        }
+        .custom-label {
+            padding: 10px;
+            margin: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            display: inline-block;
+            text-align: center;
         }
     </style>
 </head>
@@ -67,11 +75,22 @@
             </div>
         </div>
         <div class="right-column">
-            <input type="file" id="videoFile" accept="video/mp4,video/quicktime" class="file-input">
-            <input type="file" id="dataFile" accept=".txt" class="file-input">
+              <div>
+                <label for="videoFile" class="custom-label">選擇影片檔</label>
+                <input type="file" id="videoFile" accept="video/mp4,video/quicktime" class="file-input">
+                <div id="videoFileName" class="file-name"></div>
+            </div>
+            
+            <div>
+                <label for="dataFile" class="custom-label">選擇數據檔</label>
+                <input type="file" id="dataFile" accept=".txt" class="file-input">
+                <div id="dataFileName" class="file-name"></div>
+            </div>
+
             <input type="range" id="timeSlider" min="0" max="100" value="0">
             <button id="startButton" class="button">開始</button>
             <button id="pauseButton" class="button">暫停</button>
+        </div>
         </div>
     </div>
 
@@ -84,7 +103,6 @@
                 labels: [],
                 datasets: [{
                     label: 'Sensor Data',
-display: false,
                     data: [],
                     borderColor: 'rgba(75, 192, 192, 1)',
                     tension: 0.1
@@ -200,6 +218,21 @@ display: false,
 
         video.addEventListener('loadedmetadata', () => {
         });
+        videoFile.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                videoFileName.textContent = file.name;
+            }
+        });
+
+        dataFile.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                dataFileName.textContent = file.name;
+            }
+        });
+
+
     </script>
 </body>
 </html>
