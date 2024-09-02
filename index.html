@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -62,20 +62,25 @@
             display: inline-block;
             text-align: center;
         }
+        #results {
+            margin-top: 20px;
+            font-size: 16px;
+            line-height: 1.5;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="left-column">
             <video id="myVideo" controls>
-                Your browser does not support the video tag.
             </video>
             <div id="myChartContainer">
                 <canvas id="myChart"></canvas>
             </div>
         </div>
         <div class="right-column">
-              <div>
+            <div id="results"></div>
+            <div>
                 <label for="videoFile" class="custom-label">選擇影片檔</label>
                 <input type="file" id="videoFile" accept="video/mp4,video/quicktime" class="file-input">
                 <div id="videoFileName" class="file-name"></div>
@@ -90,7 +95,6 @@
             <input type="range" id="timeSlider" min="0" max="100" value="0">
             <button id="startButton" class="button">開始</button>
             <button id="pauseButton" class="button">暫停</button>
-        </div>
         </div>
     </div>
 
@@ -164,6 +168,7 @@
                 const content = e.target.result;
                 chartData = parseDataFile(content);
                 updateChart(0);
+                displayResults();  // 呼叫此函數來顯示結果
             };
             reader.readAsText(file);
         });
@@ -173,6 +178,50 @@
                 const [time, value] = line.trim().split(' ');
                 return { time, value: parseFloat(value) };
             }).filter(item => !isNaN(item.value));
+        }
+
+        function calculateHitsAndMaxValues() {
+            const results = [];
+            let hitCount = 0;
+
+            for (let i = 0; i < chartData.length; i++) {
+                if (chartData[i].value > 200) {
+                    hitCount++;
+                    let maxVal = chartData[i].value;
+                    let maxTime = chartData[i].time;
+                    let isSuddenForce = false;
+
+                    for (let j = i + 1; j < chartData.length && j <= i + 30; j++) {  // 30 對應於3秒，如果數據以10Hz取樣
+                        if (chartData[j].value > maxVal) {
+                            maxVal = chartData[j].value;
+                            maxTime = chartData[j].time;
+                        }
+                        // 判斷是否為瞬間發力：高峰後快速回落
+                        if (chartData[j].value < maxVal - 400) {  // 這裡根據實際情況調整
+                            isSuddenForce = true;
+                            break;
+                        }
+                    }
+                    results.push({
+                        time: maxTime,
+                        value: maxVal,
+                        type: isSuddenForce ? '瞬間發力' : '均勻發力',
+                        color: isSuddenForce ? 'green' : 'red'
+                    });
+                    i += 30;  // 跳過3秒時間窗口
+                }
+            }
+
+            return { results, hitCount };
+        }
+
+        function displayResults() {
+            const { results, hitCount } = calculateHitsAndMaxValues();
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = results.map(result => {
+                return `${result.time} ${result.value} <span style="color:${result.color}">(${result.type})</span>`;
+            }).join('<br>');
+            resultsDiv.innerHTML += `<br>總共擊球 ${hitCount} 次`;
         }
 
         function updateChart(currentTime) {
