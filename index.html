@@ -79,6 +79,7 @@
             </div>
         </div>
         <div class="right-column">
+            <div id="experimentTime" style="font-size: 18px; margin-bottom: 10px;"></div> <!-- 新增這一行 -->
             <div id="results"></div>
             <div>
                 <label for="videoFile" class="custom-label">選擇影片檔</label>
@@ -166,9 +167,28 @@
             const reader = new FileReader();
             reader.onload = function(e) {
                 const content = e.target.result;
+                const lines = content.split('\n');
                 chartData = parseDataFile(content);
                 updateChart(0);
-                displayResults();  // 呼叫此函數來顯示結果
+                displayResults();
+
+                // 使用文件的最後修改時間
+                const lastModified = new Date(file.lastModified);
+                
+                // 提取文件中的時間
+                const firstLine = lines[0].trim();
+                const [firstTime] = firstLine.split(' ');
+                const [minutes, seconds, milliseconds] = firstTime.split('.').join(':').split(':').map(Number);
+                
+                // 設定時間
+                lastModified.setMinutes(minutes);
+                lastModified.setSeconds(seconds);
+                lastModified.setMilliseconds(milliseconds);
+
+                // 格式化並顯示日期和時間
+                const experimentTime = `此次實驗始於 ${lastModified.getFullYear()}.${lastModified.getMonth() + 1}.${lastModified.getDate()} ${lastModified.getHours()}:${minutes}:${seconds}:${milliseconds}`;
+                
+                document.getElementById('experimentTime').innerText = experimentTime;
             };
             reader.readAsText(file);
         });
@@ -224,62 +244,62 @@
             resultsDiv.innerHTML += `<br>總共擊球 ${hitCount} 次`;
         }
 
-        function updateChart(currentTime) {
-            const currentIndex = Math.floor(currentTime * 10);
-            const startIndex = Math.max(0, currentIndex - 29);
-            const endIndex = currentIndex;
-            
-            const displayData = chartData.slice(startIndex, endIndex + 1);
+function updateChart(currentTime) {
+    const currentIndex = Math.floor(currentTime * 10);
+    const startIndex = Math.max(0, currentIndex - 29);
+    const endIndex = currentIndex;
+    
+    const displayData = chartData.slice(startIndex, endIndex + 1);
 
-            myChart.data.labels = displayData.map(item => item.time);
-            myChart.data.datasets[0].data = displayData.map(item => item.value);
-            myChart.update('none');
-        }
+    myChart.data.labels = displayData.map(item => item.time);
+    myChart.data.datasets[0].data = displayData.map(item => item.value);
+    myChart.update('none');
+}
 
-        function startUpdate() {
-            updateInterval = setInterval(() => {
-                const currentTime = video.currentTime;
-                timeSlider.value = (currentTime / video.duration) * 100;
-                updateChart(currentTime);
-            }, 100);
-        }
+function startUpdate() {
+    updateInterval = setInterval(() => {
+        const currentTime = video.currentTime;
+        timeSlider.value = (currentTime / video.duration) * 100;
+        updateChart(currentTime);
+    }, 100);
+}
 
-        function stopUpdate() {
-            clearInterval(updateInterval);
-        }
+function stopUpdate() {
+    clearInterval(updateInterval);
+}
 
-        video.addEventListener('play', startUpdate);
-        video.addEventListener('pause', stopUpdate);
+video.addEventListener('play', startUpdate);
+video.addEventListener('pause', stopUpdate);
 
-        startButton.addEventListener('click', () => {
-            video.play();
-        });
+startButton.addEventListener('click', () => {
+    video.play();
+});
 
-        pauseButton.addEventListener('click', () => {
-            video.pause();
-        });
+pauseButton.addEventListener('click', () => {
+    video.pause();
+});
 
-        timeSlider.addEventListener('input', () => {
-            const time = (timeSlider.value / 100) * video.duration;
-            video.currentTime = time;
-            updateChart(time);
-        });
+timeSlider.addEventListener('input', () => {
+    const time = (timeSlider.value / 100) * video.duration;
+    video.currentTime = time;
+    updateChart(time);
+});
 
-        video.addEventListener('loadedmetadata', () => {
-        });
-        videoFile.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                videoFileName.textContent = file.name;
-            }
-        });
+video.addEventListener('loadedmetadata', () => {
+});
+videoFile.addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        videoFileName.textContent = file.name;
+    }
+});
 
-        dataFile.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                dataFileName.textContent = file.name;
-            }
-        });
+dataFile.addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        dataFileName.textContent = file.name;
+    }
+});
 
 
     </script>
