@@ -228,7 +228,7 @@
 
         function updateChart(currentTime) {
             const currentIndex = Math.floor(currentTime * 100);
-            const displayData = chartData.slice(Math.max(0, currentIndex - 499), currentIndex + 1);
+            const displayData = chartData.slice(Math.max(0, currentIndex - 99), currentIndex + 1);
 
             myChart.data.labels = displayData.map(item => item.time);
             myChart.data.datasets[0].data = displayData.map(item => item.value);
