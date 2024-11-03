@@ -104,7 +104,7 @@
                 <button id="deleteHitButton" class="button">刪除最新擊球時間</button>
             </div>
             <input type="range" id="timeSlider" min="0" max="100" value="0">
-            <button id="startButton" class="button">開始</button>
+            <button id="startButton" class="button" disabled>開始</button>
             <button id="pauseButton" class="button">暫停</button>
             <button id="hitButton" class="button">記錄擊球時間</button>
         </div>
@@ -172,6 +172,13 @@
 
         let chartData = [];
         let updateInterval;
+        let videoUploaded = false;
+        let dataUploaded = false;
+
+        function checkStartButton() {
+            // Enable the "開始" button only when both files are uploaded
+            startButton.disabled = !(videoUploaded && dataUploaded);
+        }
 
         videoFile.addEventListener('change', function(e) {
             const file = e.target.files[0];
@@ -185,6 +192,8 @@
             const fileURL = URL.createObjectURL(file);
             video.src = fileURL;
             video.type = fileType;
+            videoUploaded = true;
+            checkStartButton();
         });
 
         dataFile.addEventListener('change', function(e) {
@@ -194,6 +203,8 @@
                 const content = e.target.result;
                 chartData = parseDataFile(content);
                 updateChart(0);
+                dataUploaded = true;
+                checkStartButton();
             };
             reader.readAsText(file);
         });
@@ -242,12 +253,14 @@
             clearInterval(updateInterval);
         }
 
+        startButton.addEventListener('click', () => {
+            if (videoUploaded && dataUploaded) {
+                video.play();
+            }
+        });
+
         video.addEventListener('play', startUpdate);
         video.addEventListener('pause', stopUpdate);
-
-        startButton.addEventListener('click', () => {
-            video.play();
-        });
 
         pauseButton.addEventListener('click', () => {
             video.pause();
