@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
@@ -25,14 +24,14 @@
         }
         .right-column {
             width: 35%;
-            padding: 10px; 
+            padding: 10px;  
             display: flex;
             flex-direction: column;
             justify-content: flex-end;
         }
         .file-input-container {
             display: flex;
-            gap: 30px; 
+            gap: 10px;  
         }
         #myVideo {
             width: 80%;
@@ -82,7 +81,8 @@
 <body>
     <div class="container">
         <div class="left-column">
-            <video id="myVideo" controls autoplay></video> 
+            <video id="myVideo" controls>
+            </video>
             <div id="myChartContainer">
                 <canvas id="myChart"></canvas>
             </div>
@@ -101,7 +101,7 @@
                     <input type="file" id="dataFile" accept=".txt" class="file-input">
                     <div id="dataFileName" class="file-name"></div>
                 </div>
-                <button id="recordDataButton" class="button">錄影並收集數據</button>
+                <button id="deleteHitButton" class="button">刪除最新擊球時間</button>
             </div>
             <input type="range" id="timeSlider" min="0" max="100" value="0">
             <button id="startButton" class="button">開始</button>
@@ -113,6 +113,8 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         const ctx = document.getElementById('myChart').getContext('2d');
+        let hitTimes = []; 
+
         const myChart = new Chart(ctx, {
             type: 'line',
             data: {
@@ -121,7 +123,8 @@
                     label: 'Sensor Data',
                     data: [],
                     borderColor: 'rgba(75, 192, 192, 1)',
-                    tension: 0.6
+                    tension: 0.6,
+                    pointBackgroundColor: [], 
                 }]
             },
             options: {
@@ -136,8 +139,12 @@
                             autoSkip: false,
                         },
                         grid: {
-                            display: true, 
-                            drawOnChartArea: true 
+                            color: function(context) {
+                                const timeLabel = context.tick.label;
+                                const isHit = hitTimes.some(hit => hit.dataTime === timeLabel);
+                                return isHit ? 'red' : 'rgba(200, 200, 200, 0.8)';
+                            },
+                            drawOnChartArea: true
                         }
                     },
                     y: {
@@ -147,7 +154,7 @@
                         },
                         beginAtZero: true,
                         grid: {
-                            display: true 
+                            display: true
                         }
                     }
                 }
@@ -158,13 +165,13 @@
         const timeSlider = document.getElementById('timeSlider');
         const startButton = document.getElementById('startButton');
         const pauseButton = document.getElementById('pauseButton');
-        const hitButton = document.getElementById('hitButton');
+        const hitButton = document.getElementById('hitButton'); 
+        const deleteHitButton = document.getElementById('deleteHitButton'); 
         const videoFile = document.getElementById('videoFile');
         const dataFile = document.getElementById('dataFile');
 
         let chartData = [];
         let updateInterval;
-        let hitTimes = [];
 
         videoFile.addEventListener('change', function(e) {
             const file = e.target.files[0];
@@ -177,12 +184,7 @@
 
             const fileURL = URL.createObjectURL(file);
             video.src = fileURL;
-
-            if (fileType === 'video/mp4') {
-                video.type = 'video/mp4';
-            } else if (fileType === 'video/quicktime') {
-                video.type = 'video/quicktime';
-            }
+            video.type = fileType;
         });
 
         dataFile.addEventListener('change', function(e) {
@@ -197,20 +199,34 @@
         });
 
         function parseDataFile(content) {
-            let millisecondCounter = 1; 
+            let millisecond = 0;
+            let second = 0;
             return content.split('\n').map(line => {
-                const [time, value] = line.trim().split(' ');
-                const newTime = time.replace(/:\d{3}$/, '') + `:${millisecondCounter++ % 10}`; 
-                return { time: newTime, value: parseFloat(value) };
+                const [value] = line.trim().split(' ');
+
+                if (millisecond === 100) {
+                    millisecond = 0;
+                    second++;
+                }
+
+                const timeLabel = `${second}:${millisecond.toString().padStart(3, '0')}`;
+                millisecond++;
+                return { time: timeLabel, value: parseFloat(value) };
             }).filter(item => !isNaN(item.value));
         }
 
         function updateChart(currentTime) {
-            const currentIndex = Math.floor(currentTime * 10);
-            const displayData = chartData.slice(Math.max(0, currentIndex - 29), currentIndex + 1);
+            const currentIndex = Math.floor(currentTime * 100);
+            const displayData = chartData.slice(Math.max(0, currentIndex - 499), currentIndex + 1);
 
             myChart.data.labels = displayData.map(item => item.time);
             myChart.data.datasets[0].data = displayData.map(item => item.value);
+
+            myChart.data.datasets[0].pointBackgroundColor = displayData.map(item => {
+                const isHit = hitTimes.some(hit => hit.dataTime === item.time);
+                return isHit ? 'red' : 'rgba(75, 192, 192, 1)';
+            });
+
             myChart.update('none');
         }
 
@@ -245,8 +261,8 @@
 
         hitButton.addEventListener('click', () => { 
             const videoTime = video.currentTime;
-            const currentIndex = Math.floor(videoTime * 10);
-            const dataItem = chartData[currentIndex] || { time: "未知", value: "無數據" };
+            const dataItem = chartData[Math.floor(videoTime * 100)];
+            if (!dataItem) return;
 
             hitTimes.push({ videoTime, dataTime: dataItem.time, dataValue: dataItem.value });
             hitTimes.sort((a, b) => a.videoTime - b.videoTime);
@@ -256,109 +272,23 @@
             hitTimes.forEach(hit => {
                 resultsDiv.innerHTML += `影片時間: ${hit.videoTime.toFixed(2)} 秒, 數據時間: ${hit.dataTime}, 數據數值: ${hit.dataValue} <br>`;
             });
+
+            updateChart(videoTime);
         });
 
-        let isRecording = false;
-        let mediaRecorder;
-        let recordedChunks = [];
+        deleteHitButton.addEventListener('click', () => {
+            if (hitTimes.length === 0) return; 
 
-        document.getElementById('recordDataButton').addEventListener('click', async function () {
-            if (!isRecording) {
-                await startRecording();
-                await connectToBluetoothDevice();
-                this.textContent = '停止錄影';
-            } else {
-                stopRecording();
-                this.textContent = '錄影並收集數據';
-            }
-            isRecording = !isRecording;
+            hitTimes.pop();
+
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = ''; 
+            hitTimes.forEach(hit => {
+                resultsDiv.innerHTML += `影片時間: ${hit.videoTime.toFixed(2)} 秒, 數據時間: ${hit.dataTime}, 數據數值: ${hit.dataValue} <br>`;
+            });
+
+            updateChart(video.currentTime);
         });
-
-        // 開始錄影的函數
-        async function startRecording() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                document.getElementById('myVideo').srcObject = stream;
-
-                mediaRecorder = new MediaRecorder(stream);
-                mediaRecorder.ondataavailable = function(event) {
-                    if (event.data.size > 0) {
-                        recordedChunks.push(event.data);
-                    }
-                };
-                mediaRecorder.onstop = function() {
-                    const blob = new Blob(recordedChunks, { type: 'video/webm' });
-                    document.getElementById('myVideo').src = URL.createObjectURL(blob);
-                    recordedChunks = [];
-                };
-                mediaRecorder.start();
-            } catch (error) {
-                console.error('無法訪問攝像頭:', error);
-            }
-        }
-
-        function stopRecording() {
-            mediaRecorder.stop();
-            document.getElementById('myVideo').srcObject = null;
-        }
-
-        // 藍牙連接函數
-        async function connectToBluetoothDevice() {
-            try {
-                const device = await navigator.bluetooth.requestDevice({
-                    acceptAllDevices: true,
-                    optionalServices: ['12345678-1234-5678-1234-56789abcdef0']
-                });
-
-                const server = await device.gatt.connect();
-                const service = await server.getPrimaryService('12345678-1234-5678-1234-56789abcdef0');
-                const characteristic = await service.getCharacteristic('12345678-1234-5678-1234-56789abcdef1');
-
-                await characteristic.startNotifications();
-                characteristic.addEventListener('characteristicvaluechanged', handleData);
-
-                console.log('藍牙連接成功');
-            } catch (error) {
-                console.error('藍牙連接失敗:', error);
-            }
-        }
-
-        // 處理藍牙數據
-function handleData(event) {
-    const value = new TextDecoder().decode(event.target.value);  // 解碼為字符串
-    const emgValue = parseInt(value.trim(), 10);  // 將字符串轉換為整數
-    console.log('接收到的 EMG 數據:', emgValue);  // 檢查接收到的數據
-
-       if (!isNaN(emgValue)) {
-        updateChartWithEMG(emgValue);  // 確保只將有效數據更新到圖表
-    }
-}
-
-
-        // 更新圖表數據
-function updateChartWithEMG(emgValue) {
-    if (myChart.data.labels.length > 50) {
-        myChart.data.labels.shift();  // 刪除最舊的標籤
-        myChart.data.datasets[0].data.shift();  // 刪除最舊的數據
-    }
-
-    // 獲取當前時間並自訂格式為 分:秒:毫秒/100
-    const now = new Date();
-    const minutes = now.getMinutes().toString().padStart(2, '0');  // 兩位數分鐘
-    const seconds = now.getSeconds().toString().padStart(2, '0');  // 兩位數秒鐘
-    const milliseconds = Math.floor(now.getMilliseconds() / 100);  // 毫秒除以 100 得到 0~9
-
-    const formattedTime = `${minutes}:${seconds}:${milliseconds}`;
-
-    // 將時間標籤推入圖表
-    myChart.data.labels.push(formattedTime);
-    // 將接收到的 EMG 數據推入圖表
-    myChart.data.datasets[0].data.push(emgValue);
-    
-    // 更新圖表
-    myChart.update();
-}
-
     </script>
 </body>
 </html>
