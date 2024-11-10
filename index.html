@@ -199,17 +199,10 @@
         });
 
         function parseDataFile(content) {
-            let millisecondCounter = 0;
-            return content.split('\n').map(line => {
+            return content.split('\\n').map(line => {
                 const [time, value] = line.trim().split(' ');
-                
-                // 格式化時間戳，分:秒:毫秒（三位數）
-                const [minutes, seconds] = time.split(':');
-                const newTime = `${minutes}:${seconds}:${millisecondCounter.toString().padStart(3, '0')}`;
-
-                millisecondCounter = (millisecondCounter + 10) % 1000;
-
-                return { time: newTime, value: parseFloat(value) };
+                // 保留原始時間格式（包含三位數毫秒）
+                return { time: time, value: parseFloat(value) };
             }).filter(item => !isNaN(item.value));
         }
 
