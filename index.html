@@ -208,7 +208,7 @@
                 const [minutes, seconds] = time.split(':');
                 const newTime = `${minutes}:${seconds}:${millisecondCounter.toString().padStart(3, '0')}`;
 
-               // millisecondCounter = (millisecondCounter + 10) % 1000;
+                millisecondCounter = (millisecondCounter + 10) ;
 
                 return { time: newTime, value: parseFloat(value) };
             }).filter(item => !isNaN(item.value));
