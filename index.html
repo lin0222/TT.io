@@ -1,293 +1,359 @@
+下面是一個「可直接執行」的完整單頁版廁所報修系統。
+你只要：
+
+1. 建立一個 index.html
+2. 將以下程式碼全部貼上
+3. 用瀏覽器開啟
+
+即可使用。
+
+功能包含：
+
+* 區域選單
+* 報修號碼輸入
+* 雙層報修內容選單
+* 其他類型文字輸入
+* 備註輸入
+* 自動記錄日期（yyyy.mm.dd）
+* 新增報修
+* 篩選功能
+* 報修列表顯示
+* LocalStorage 本地儲存（重新整理不會消失）
 
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>桌球發力訓練系統</title>
-    <style>
-        body, html {
-            margin: 0;
-            padding: 0px 30px;
-            height: 100%;
-            font-family: Arial, sans-serif;
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>廁所報修系統</title>
+<style>
+    *{
+        box-sizing:border-box;
+        margin:0;
+        padding:0;
+        font-family:"Microsoft JhengHei",sans-serif;
+    }
+    body{
+        background:#f4f4f4;
+        padding:20px;
+        height:100vh;
+    }
+    .container{
+        height:100%;
+        display:flex;
+        flex-direction:column;
+        gap:20px;
+    }
+    /* 上方1/4 */
+    .top-section{
+        background:white;
+        border-radius:10px;
+        padding:20px;
+        height:25%;
+        box-shadow:0 2px 8px rgba(0,0,0,0.1);
+    }
+    .form-grid{
+        display:grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap:15px;
+        margin-bottom:15px;
+    }
+    .form-group{
+        display:flex;
+        flex-direction:column;
+    }
+    label{
+        margin-bottom:5px;
+        font-weight:bold;
+    }
+    select,
+    input,
+    textarea{
+        padding:10px;
+        border:1px solid #ccc;
+        border-radius:5px;
+        font-size:14px;
+    }
+    textarea{
+        resize:none;
+        height:80px;
+    }
+    .button-area{
+        display:flex;
+        justify-content:flex-end;
+    }
+    button{
+        padding:10px 20px;
+        border:none;
+        background:#007bff;
+        color:white;
+        border-radius:5px;
+        cursor:pointer;
+        font-size:16px;
+    }
+    button:hover{
+        background:#0056b3;
+    }
+    /* 下方3/4 */
+    .bottom-section{
+        background:white;
+        border-radius:10px;
+        padding:20px;
+        height:75%;
+        box-shadow:0 2px 8px rgba(0,0,0,0.1);
+        overflow:auto;
+    }
+    .filter-area{
+        margin-bottom:20px;
+        display:flex;
+        gap:10px;
+        align-items:center;
+    }
+    table{
+        width:100%;
+        border-collapse:collapse;
+    }
+    th, td{
+        border:1px solid #ddd;
+        padding:12px;
+        text-align:left;
+    }
+    th{
+        background:#007bff;
+        color:white;
+    }
+    tr:nth-child(even){
+        background:#f9f9f9;
+    }
+    .hidden{
+        display:none;
+    }
+    @media(max-width:1000px){
+        .top-section{
+            height:auto;
         }
-        .container {
-            display: flex;
-            height: 100%; 
-            gap: 0px; 
+        .bottom-section{
+            height:auto;
         }
-        .left-column {
-            width: 65%; 
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start; 
+        .form-grid{
+            grid-template-columns:1fr;
         }
-        .right-column {
-            width: 35%;
-            padding: 10px;  
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-end;
-        }
-        .file-input-container {
-            display: flex;
-            gap: 10px;  
-        }
-        #myVideo {
-            width: 80%;
-            max-height: 55%;
-            align-self: flex-end; 
-            margin-right: 60px; 
-        }
-        #myChartContainer {
-            height: 45%;
-            width: 150%;
-            margin-left: 80px; 
-        }
-        #myChart {
-            width: 100%;
-            height: 100%;
-        }
-        #timeSlider {
-            width: 100%;
-            margin-bottom: 20px;
-        }
-        .button {
-            padding: 10px;
-            margin: 5px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-        .file-input {
-            display: none;
-        }
-        .custom-label {
-            padding: 10px;
-            margin: 5px;
-            font-size: 16px;
-            cursor: pointer;
-            background-color: #f0f0f0;
-            border: 1px solid #ccc;
-            display: inline-block;
-            text-align: center;
-        }
-        #results {
-            margin-top: 20px;
-            font-size: 16px;
-            line-height: 1.5;
-        }
-    </style>
+    }
+</style>
 </head>
 <body>
-    <div class="container">
-        <div class="left-column">
-            <video id="myVideo" controls>
-            </video>
-            <div id="myChartContainer">
-                <canvas id="myChart"></canvas>
+<div class="container">
+    <!-- 上方區塊 -->
+    <div class="top-section">
+        <div class="form-grid">
+            <!-- 區域 -->
+            <div class="form-group">
+                <label>區域</label>
+                <select id="area">
+                    <option value="">請選擇</option>
+                    <option>B2內野</option>
+                    <option>B2外野</option>
+                    <option>B1一壘側</option>
+                    <option>B1三壘側</option>
+                    <option>B1外野</option>
+                    <option>二樓一壘側</option>
+                    <option>二樓三壘側</option>
+                    <option>三樓一壘側</option>
+                    <option>三樓三壘側</option>
+                    <option>三樓包廂</option>
+                    <option>三樓外野</option>
+                    <option>四樓一壘側</option>
+                    <option>四樓三壘側</option>
+                </select>
+            </div>
+            <!-- 報修號碼 -->
+            <div class="form-group">
+                <label>報修號碼</label>
+                <input type="text" id="repairNo" placeholder="請輸入英文或數字">
+            </div>
+            <!-- 第一層 -->
+            <div class="form-group">
+                <label>報修類型</label>
+                <select id="mainCategory">
+                    <option value="">請選擇</option>
+                    <option value="馬桶相關">馬桶相關</option>
+                    <option value="小便斗相關">小便斗相關</option>
+                    <option value="電燈相關">電燈相關</option>
+                    <option value="洗手台相關">洗手台相關</option>
+                    <option value="其他">其他</option>
+                </select>
+            </div>
+            <!-- 第二層 -->
+            <div class="form-group">
+                <label>報修內容</label>
+                <select id="subCategory">
+                    <option value="">請先選擇類型</option>
+                </select>
+                <input 
+                    type="text" 
+                    id="otherInput" 
+                    class="hidden"
+                    placeholder="請輸入其他內容">
             </div>
         </div>
-        <div class="right-column">
-            <div id="experimentTime" style="font-size: 18px; margin-bottom: 10px;"></div> 
-            <div id="results"></div>
-            <div class="file-input-container">
-                <div>
-                    <label for="videoFile" class="custom-label">選擇影片檔</label>
-                    <input type="file" id="videoFile" accept="video/mp4,video/quicktime" class="file-input">
-                    <div id="videoFileName" class="file-name"></div>
-                </div>
-                <div>
-                    <label for="dataFile" class="custom-label">選擇數據檔</label>
-                    <input type="file" id="dataFile" accept=".txt" class="file-input">
-                    <div id="dataFileName" class="file-name"></div>
-                </div>
-                <button id="deleteHitButton" class="button">刪除最新擊球時間</button>
-            </div>
-            <input type="range" id="timeSlider" min="0" max="100" value="0">
-            <button id="startButton" class="button">開始</button>
-            <button id="pauseButton" class="button">暫停</button>
-            <button id="hitButton" class="button">記錄擊球時間</button>
+        <!-- 備註 -->
+        <div class="form-group">
+            <label>備註</label>
+            <textarea id="note" placeholder="請輸入備註"></textarea>
+        </div>
+        <br>
+        <div class="button-area">
+            <button onclick="submitRepair()">送出報修</button>
         </div>
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        const ctx = document.getElementById('myChart').getContext('2d');
-        let hitTimes = []; 
-
-        const myChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: [],
-                datasets: [{
-                    label: 'Sensor Data',
-                    data: [],
-                    borderColor: 'rgba(75, 192, 192, 1)',
-                    tension: 0.6,
-                    pointBackgroundColor: [], 
-                }]
-            },
-            options: {
-                animation: false,
-                scales: {
-                    x: {
-                        title: {
-                            display: true,
-                            text: 'Time'
-                        },
-                        ticks: {
-                            autoSkip: false,
-                        },
-                        grid: {
-                            color: function(context) {
-                                const timeLabel = context.tick.label;
-                                const isHit = hitTimes.some(hit => hit.dataTime === timeLabel);
-                                return isHit ? 'red' : 'rgba(200, 200, 200, 0.8)';
-                            },
-                            drawOnChartArea: true
-                        }
-                    },
-                    y: {
-                        title: {
-                            display: true,
-                            text: 'Value'
-                        },
-                        beginAtZero: true,
-                        grid: {
-                            display: true
-                        }
-                    }
-                }
-            }
-        });
-
-        const video = document.getElementById('myVideo');
-        const timeSlider = document.getElementById('timeSlider');
-        const startButton = document.getElementById('startButton');
-        const pauseButton = document.getElementById('pauseButton');
-        const hitButton = document.getElementById('hitButton'); 
-        const deleteHitButton = document.getElementById('deleteHitButton'); 
-        const videoFile = document.getElementById('videoFile');
-        const dataFile = document.getElementById('dataFile');
-
-        let chartData = [];
-        let updateInterval;
-
-        videoFile.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            const fileType = file.type;
-
-            if (fileType !== 'video/mp4' && fileType !== 'video/quicktime') {
-                alert('請選擇 MP4 或 MOV 格式的影片檔案。');
-                return;
-            }
-
-            const fileURL = URL.createObjectURL(file);
-            video.src = fileURL;
-            video.type = fileType;
-        });
-
-        dataFile.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const content = e.target.result;
-                chartData = parseDataFile(content);
-                updateChart(0);
-            };
-            reader.readAsText(file);
-        });
-
-        function parseDataFile(content) {
-            let millisecondCounter = 0;
-            return content.split('\n').map(line => {
-                const [time, value] = line.trim().split(' ');
-                
-                // 格式化時間戳，分:秒:毫秒（三位數）
-                const [minutes, seconds] = time.split(':');
-                const newTime = `${minutes}:${seconds}:${millisecondCounter.toString().padStart(3, '0')}`;
-
-                millisecondCounter = (millisecondCounter + 10)%1000 ;
-
-                return { time: newTime, value: parseFloat(value) };
-            }).filter(item => !isNaN(item.value));
-        }
-
-        function updateChart(currentTime) {
-            const currentIndex = Math.floor(currentTime * 100);
-            const displayData = chartData.slice(Math.max(0, currentIndex - 49), currentIndex + 1);
-
-            myChart.data.labels = displayData.map(item => item.time);
-            myChart.data.datasets[0].data = displayData.map(item => item.value);
-
-            myChart.data.datasets[0].pointBackgroundColor = displayData.map(item => {
-                const isHit = hitTimes.some(hit => hit.dataTime === item.time);
-                return isHit ? 'red' : 'rgba(75, 192, 192, 1)';
+    <!-- 下方區塊 -->
+    <div class="bottom-section">
+        <div class="filter-area">
+            <label>篩選區域：</label>
+            <select id="filterArea" onchange="renderTable()">
+                <option value="">全部</option>
+                <option>B2內野</option>
+                <option>B2外野</option>
+                <option>B1一壘側</option>
+                <option>B1三壘側</option>
+                <option>B1外野</option>
+                <option>二樓一壘側</option>
+                <option>二樓三壘側</option>
+                <option>三樓一壘側</option>
+                <option>三樓三壘側</option>
+                <option>三樓包廂</option>
+                <option>三樓外野</option>
+                <option>四樓一壘側</option>
+                <option>四樓三壘側</option>
+            </select>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>時間</th>
+                    <th>區域</th>
+                    <th>報修號碼</th>
+                    <th>報修內容</th>
+                    <th>備註</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+</div>
+<script>
+const categoryData = {
+    "馬桶相關": ["無法沖水", "堵塞", "歪斜"],
+    "小便斗相關": ["嗶嗶叫", "堵塞", "漏水"],
+    "電燈相關": ["電燈不亮"],
+    "洗手台相關": ["無法沖水"]
+};
+const mainCategory = document.getElementById("mainCategory");
+const subCategory = document.getElementById("subCategory");
+const otherInput = document.getElementById("otherInput");
+mainCategory.addEventListener("change", function(){
+    const value = this.value;
+    subCategory.innerHTML = "";
+    if(value === "其他"){
+        subCategory.classList.add("hidden");
+        otherInput.classList.remove("hidden");
+    }else{
+        otherInput.classList.add("hidden");
+        subCategory.classList.remove("hidden");
+        const defaultOption = document.createElement("option");
+        defaultOption.text = "請選擇";
+        defaultOption.value = "";
+        subCategory.appendChild(defaultOption);
+        if(categoryData[value]){
+            categoryData[value].forEach(item=>{
+                const option = document.createElement("option");
+                option.value = item;
+                option.text = item;
+                subCategory.appendChild(option);
             });
-
-            myChart.update('none');
         }
-
-        function startUpdate() {
-            updateInterval = setInterval(() => {
-                const currentTime = video.currentTime;
-                timeSlider.value = (currentTime / video.duration) * 100;
-                updateChart(currentTime);
-            }, 100);
+    }
+});
+function getTodayDate(){
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth()+1).padStart(2,"0");
+    const dd = String(today.getDate()).padStart(2,"0");
+    return `${yyyy}.${mm}.${dd}`;
+}
+function submitRepair(){
+    const area = document.getElementById("area").value;
+    const repairNo = document.getElementById("repairNo").value;
+    const main = mainCategory.value;
+    const sub = subCategory.value;
+    const other = otherInput.value;
+    const note = document.getElementById("note").value;
+    if(!area || !repairNo || !main){
+        alert("請完整填寫資料");
+        return;
+    }
+    let repairContent = "";
+    if(main === "其他"){
+        if(!other){
+            alert("請輸入其他內容");
+            return;
         }
-
-        function stopUpdate() {
-            clearInterval(updateInterval);
+        repairContent = `其他 / ${other}`;
+    }else{
+        if(!sub){
+            alert("請選擇報修內容");
+            return;
         }
-
-        video.addEventListener('play', startUpdate);
-        video.addEventListener('pause', stopUpdate);
-
-        startButton.addEventListener('click', () => {
-            video.play();
-        });
-
-        pauseButton.addEventListener('click', () => {
-            video.pause();
-        });
-
-        timeSlider.addEventListener('input', () => {
-            const time = (timeSlider.value / 100) * video.duration;
-            video.currentTime = time;
-            updateChart(time);
-        });
-
-        hitButton.addEventListener('click', () => { 
-            const videoTime = video.currentTime;
-            const dataItem = chartData[Math.floor(videoTime * 100)];
-            if (!dataItem) return;
-
-            hitTimes.push({ videoTime, dataTime: dataItem.time, dataValue: dataItem.value });
-            hitTimes.sort((a, b) => a.videoTime - b.videoTime);
-
-            const resultsDiv = document.getElementById('results');
-            resultsDiv.innerHTML = ''; 
-            hitTimes.forEach(hit => {
-                resultsDiv.innerHTML += `影片時間: ${hit.videoTime.toFixed(2)} 秒, 數據時間: ${hit.dataTime}, 數據數值: ${hit.dataValue} <br>`;
-            });
-
-            updateChart(videoTime);
-        });
-
-        deleteHitButton.addEventListener('click', () => {
-            if (hitTimes.length === 0) return; 
-
-            hitTimes.pop();
-
-            const resultsDiv = document.getElementById('results');
-            resultsDiv.innerHTML = ''; 
-            hitTimes.forEach(hit => {
-                resultsDiv.innerHTML += `影片時間: ${hit.videoTime.toFixed(2)} 秒, 數據時間: ${hit.dataTime}, 數據數值: ${hit.dataValue} <br>`;
-            });
-
-            updateChart(video.currentTime);
-        });
-    </script>
+        repairContent = `${main} / ${sub}`;
+    }
+    const repairData = {
+        date:getTodayDate(),
+        area,
+        repairNo,
+        repairContent,
+        note
+    };
+    let data = JSON.parse(localStorage.getItem("repairData")) || [];
+    data.push(repairData);
+    localStorage.setItem("repairData", JSON.stringify(data));
+    clearForm();
+    renderTable();
+    alert("報修新增成功！");
+}
+function clearForm(){
+    document.getElementById("area").value = "";
+    document.getElementById("repairNo").value = "";
+    document.getElementById("note").value = "";
+    mainCategory.value = "";
+    subCategory.innerHTML = `
+        <option value="">請先選擇類型</option>
+    `;
+    otherInput.value = "";
+    otherInput.classList.add("hidden");
+    subCategory.classList.remove("hidden");
+}
+function renderTable(){
+    const tableBody = document.getElementById("tableBody");
+    const filterArea = document.getElementById("filterArea").value;
+    let data = JSON.parse(localStorage.getItem("repairData")) || [];
+    if(filterArea){
+        data = data.filter(item=>item.area === filterArea);
+    }
+    tableBody.innerHTML = "";
+    data.forEach(item=>{
+        const row = `
+            <tr>
+                <td>${item.date}</td>
+                <td>${item.area}</td>
+                <td>${item.repairNo}</td>
+                <td>${item.repairContent}</td>
+                <td>${item.note}</td>
+            </tr>
+        `;
+        tableBody.innerHTML += row;
+    });
+}
+renderTable();
+</script>
 </body>
 </html>
