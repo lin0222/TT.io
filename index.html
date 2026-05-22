@@ -5,123 +5,132 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>廁所報修系統</title>
 <style>
-    *{
-        box-sizing:border-box;
-        margin:0;
-        padding:0;
-        font-family:"Microsoft JhengHei",sans-serif;
-    }
-    body{
-        background:#f4f4f4;
-        padding:20px;
-        height:100vh;
-    }
-    .container{
-        height:100%;
-        display:flex;
-        flex-direction:column;
-        gap:20px;
-    }
-    /* 上方1/4 */
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+    font-family:"Microsoft JhengHei",sans-serif;
+}
+body{
+    background:#f4f4f4;
+    padding:20px;
+    height:100vh;
+}
+.container{
+    height:100%;
+    display:flex;
+    flex-direction:column;
+    gap:20px;
+}
+/* 上方區塊 */
+.top-section{
+    background:white;
+    border-radius:10px;
+    padding:20px;
+    height:25%;
+    box-shadow:0 2px 8px rgba(0,0,0,0.1);
+}
+.form-grid{
+    display:grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap:15px;
+    margin-bottom:15px;
+}
+.form-group{
+    display:flex;
+    flex-direction:column;
+}
+label{
+    margin-bottom:5px;
+    font-weight:bold;
+}
+select,
+input,
+textarea{
+    padding:10px;
+    border:1px solid #ccc;
+    border-radius:5px;
+    font-size:14px;
+}
+textarea{
+    resize:none;
+    height:80px;
+}
+.button-area{
+    display:flex;
+    justify-content:flex-end;
+}
+button{
+    padding:10px 20px;
+    border:none;
+    background:#007bff;
+    color:white;
+    border-radius:5px;
+    cursor:pointer;
+    font-size:16px;
+}
+button:hover{
+    background:#0056b3;
+}
+/* 刪除按鈕 */
+.delete-btn{
+    background:#dc3545;
+    padding:6px 12px;
+    font-size:14px;
+}
+.delete-btn:hover{
+    background:#a71d2a;
+}
+/* 下方區塊 */
+.bottom-section{
+    background:white;
+    border-radius:10px;
+    padding:20px;
+    height:75%;
+    box-shadow:0 2px 8px rgba(0,0,0,0.1);
+    overflow:auto;
+}
+.filter-area{
+    margin-bottom:20px;
+    display:flex;
+    gap:10px;
+    align-items:center;
+}
+table{
+    width:100%;
+    border-collapse:collapse;
+}
+th, td{
+    border:1px solid #ddd;
+    padding:12px;
+    text-align:left;
+}
+th{
+    background:#007bff;
+    color:white;
+}
+tr:nth-child(even){
+    background:#f9f9f9;
+}
+.hidden{
+    display:none;
+}
+@media(max-width:1000px){
     .top-section{
-        background:white;
-        border-radius:10px;
-        padding:20px;
-        height:25%;
-        box-shadow:0 2px 8px rgba(0,0,0,0.1);
+        height:auto;
+    }
+    .bottom-section{
+        height:auto;
     }
     .form-grid{
-        display:grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap:15px;
-        margin-bottom:15px;
+        grid-template-columns:1fr;
     }
-    .form-group{
-        display:flex;
-        flex-direction:column;
-    }
-    label{
-        margin-bottom:5px;
-        font-weight:bold;
-    }
-    select,
-    input,
-    textarea{
-        padding:10px;
-        border:1px solid #ccc;
-        border-radius:5px;
-        font-size:14px;
-    }
-    textarea{
-        resize:none;
-        height:80px;
-    }
-    .button-area{
-        display:flex;
-        justify-content:flex-end;
-    }
-    button{
-        padding:10px 20px;
-        border:none;
-        background:#007bff;
-        color:white;
-        border-radius:5px;
-        cursor:pointer;
-        font-size:16px;
-    }
-    button:hover{
-        background:#0056b3;
-    }
-    /* 下方3/4 */
-    .bottom-section{
-        background:white;
-        border-radius:10px;
-        padding:20px;
-        height:75%;
-        box-shadow:0 2px 8px rgba(0,0,0,0.1);
-        overflow:auto;
-    }
-    .filter-area{
-        margin-bottom:20px;
-        display:flex;
-        gap:10px;
-        align-items:center;
-    }
-    table{
-        width:100%;
-        border-collapse:collapse;
-    }
-    th, td{
-        border:1px solid #ddd;
-        padding:12px;
-        text-align:left;
-    }
-    th{
-        background:#007bff;
-        color:white;
-    }
-    tr:nth-child(even){
-        background:#f9f9f9;
-    }
-    .hidden{
-        display:none;
-    }
-    @media(max-width:1000px){
-        .top-section{
-            height:auto;
-        }
-        .bottom-section{
-            height:auto;
-        }
-        .form-grid{
-            grid-template-columns:1fr;
-        }
-    }
+}
 </style>
 </head>
 <body>
 <div class="container">
-    <!-- 上方區塊 -->
+    <!-- 上方 -->
     <div class="top-section">
         <div class="form-grid">
             <!-- 區域 -->
@@ -147,7 +156,10 @@
             <!-- 報修號碼 -->
             <div class="form-group">
                 <label>報修號碼</label>
-                <input type="text" id="repairNo" placeholder="請輸入英文或數字">
+                <input 
+                    type="text" 
+                    id="repairNo"
+                    placeholder="請輸入英文或數字">
             </div>
             <!-- 第一層 -->
             <div class="form-group">
@@ -168,8 +180,8 @@
                     <option value="">請先選擇類型</option>
                 </select>
                 <input 
-                    type="text" 
-                    id="otherInput" 
+                    type="text"
+                    id="otherInput"
                     class="hidden"
                     placeholder="請輸入其他內容">
             </div>
@@ -177,14 +189,18 @@
         <!-- 備註 -->
         <div class="form-group">
             <label>備註</label>
-            <textarea id="note" placeholder="請輸入備註"></textarea>
+            <textarea 
+                id="note"
+                placeholder="請輸入備註"></textarea>
         </div>
         <br>
         <div class="button-area">
-            <button onclick="submitRepair()">送出報修</button>
+            <button onclick="submitRepair()">
+                送出報修
+            </button>
         </div>
     </div>
-    <!-- 下方區塊 -->
+    <!-- 下方 -->
     <div class="bottom-section">
         <div class="filter-area">
             <label>篩選區域：</label>
@@ -213,6 +229,7 @@
                     <th>報修號碼</th>
                     <th>報修內容</th>
                     <th>備註</th>
+                    <th>操作</th>
                 </tr>
             </thead>
             <tbody id="tableBody"></tbody>
@@ -221,15 +238,16 @@
 </div>
 <script>
 const categoryData = {
-    "馬桶相關": ["無法沖水", "堵塞", "歪斜"],
-    "小便斗相關": ["嗶嗶叫", "堵塞", "漏水"],
-    "電燈相關": ["電燈不亮"],
-    "洗手台相關": ["無法沖水"]
+    "馬桶相關":["無法沖水","堵塞","歪斜"],
+    "小便斗相關":["嗶嗶叫","堵塞","漏水"],
+    "電燈相關":["電燈不亮"],
+    "洗手台相關":["無法沖水"]
 };
 const mainCategory = document.getElementById("mainCategory");
 const subCategory = document.getElementById("subCategory");
 const otherInput = document.getElementById("otherInput");
-mainCategory.addEventListener("change", function(){
+/* 類型切換 */
+mainCategory.addEventListener("change",function(){
     const value = this.value;
     subCategory.innerHTML = "";
     if(value === "其他"){
@@ -252,6 +270,7 @@ mainCategory.addEventListener("change", function(){
         }
     }
 });
+/* 日期 */
 function getTodayDate(){
     const today = new Date();
     const yyyy = today.getFullYear();
@@ -259,6 +278,7 @@ function getTodayDate(){
     const dd = String(today.getDate()).padStart(2,"0");
     return `${yyyy}.${mm}.${dd}`;
 }
+/* 新增報修 */
 function submitRepair(){
     const area = document.getElementById("area").value;
     const repairNo = document.getElementById("repairNo").value;
@@ -293,11 +313,12 @@ function submitRepair(){
     };
     let data = JSON.parse(localStorage.getItem("repairData")) || [];
     data.push(repairData);
-    localStorage.setItem("repairData", JSON.stringify(data));
+    localStorage.setItem("repairData",JSON.stringify(data));
     clearForm();
     renderTable();
     alert("報修新增成功！");
 }
+/* 清空表單 */
 function clearForm(){
     document.getElementById("area").value = "";
     document.getElementById("repairNo").value = "";
@@ -310,15 +331,27 @@ function clearForm(){
     otherInput.classList.add("hidden");
     subCategory.classList.remove("hidden");
 }
+/* 刪除 */
+function deleteRepair(index){
+    const confirmDelete = confirm("確定要刪除此筆資料嗎？");
+    if(!confirmDelete){
+        return;
+    }
+    let data = JSON.parse(localStorage.getItem("repairData")) || [];
+    data.splice(index,1);
+    localStorage.setItem("repairData",JSON.stringify(data));
+    renderTable();
+}
+/* 渲染表格 */
 function renderTable(){
     const tableBody = document.getElementById("tableBody");
     const filterArea = document.getElementById("filterArea").value;
     let data = JSON.parse(localStorage.getItem("repairData")) || [];
-    if(filterArea){
-        data = data.filter(item=>item.area === filterArea);
-    }
     tableBody.innerHTML = "";
-    data.forEach(item=>{
+    data.forEach((item,index)=>{
+        if(filterArea && item.area !== filterArea){
+            return;
+        }
         const row = `
             <tr>
                 <td>${item.date}</td>
@@ -326,11 +359,19 @@ function renderTable(){
                 <td>${item.repairNo}</td>
                 <td>${item.repairContent}</td>
                 <td>${item.note}</td>
+                <td>
+                    <button 
+                        class="delete-btn"
+                        onclick="deleteRepair(${index})">
+                        刪除
+                    </button>
+                </td>
             </tr>
         `;
         tableBody.innerHTML += row;
     });
 }
+/* 初始化 */
 renderTable();
 </script>
 </body>
